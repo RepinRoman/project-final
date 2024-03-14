@@ -22,6 +22,8 @@ public class ProfileTestData {
             Set.of(),
             Set.of());
 
+    public static String REST_URL = "/api/profile";
+
     public static ProfileTo getNewTo() {
         return new ProfileTo(null,
                 Set.of("three_days_before_deadline", "two_days_before_deadline", "one_day_before_deadline"),

@@ -7,14 +7,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 @UtilityClass
 public class FileUtil {
@@ -24,20 +19,22 @@ public class FileUtil {
         if (multipartFile.isEmpty()) {
             throw new IllegalRequestDataException("Select a file to upload.");
         }
-
-        File dir = new File(directoryPath);
-        if (dir.exists() || dir.mkdirs()) {
-            File file = new File(directoryPath + fileName);
-            try (OutputStream outStream = new FileOutputStream(file)) {
-                outStream.write(multipartFile.getBytes());
+        Path dirPath = Path.of(directoryPath);
+        try {
+            Files.createDirectories(dirPath);
+            Path filePath = dirPath.resolve(fileName);
+            try {
+                Files.write(filePath, multipartFile.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
             } catch (IOException ex) {
                 throw new IllegalRequestDataException("Failed to upload file" + multipartFile.getOriginalFilename());
             }
+        } catch (IOException e) {
+            throw new IllegalRequestDataException("Failed to create directory" + directoryPath);
         }
     }
 
     public static Resource download(String fileLink) {
-        Path path = Paths.get(fileLink);
+        Path path = Path.of(fileLink);
         try {
             Resource resource = new UrlResource(path.toUri());
             if (resource.exists() || resource.isReadable()) {
@@ -51,9 +48,9 @@ public class FileUtil {
     }
 
     public static void delete(String fileLink) {
-        Path path = Paths.get(fileLink);
+        Path path = Path.of(fileLink);
         try {
-            Files.delete(path);
+            Files.deleteIfExists(path);
         } catch (IOException ex) {
             throw new IllegalRequestDataException("File" + fileLink + " deletion failed.");
         }
